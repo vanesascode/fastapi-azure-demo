@@ -1,42 +1,4 @@
 @echo off
-REM ================================================================
-REM FastAPI Endpoints Batch Testing Script
-REM ================================================================
-REM 
-REM WHAT IS THIS FILE?
-REM This is a Windows batch script (.bat) that automatically tests
-REM multiple FastAPI endpoints in sequence. Instead of running each
-REM curl command manually, you can run this script once and it will
-REM execute all tests automatically.
-REM
-REM HOW TO USE:
-REM 1. Make sure your FastAPI server is running:
-REM    - Open PowerShell in the project directory
-REM    - Run: .\scaffolding\Scripts\activate
-REM    - Run: fastapi dev main.py
-REM    - Server should be running on http://127.0.0.1:8000
-REM
-REM 2. Run this batch file:
-REM    - Double-click this file in Windows Explorer, OR
-REM    - In PowerShell/CMD, run: .\test_endpoints.bat
-REM
-REM WHAT IT TESTS:
-REM - Root endpoint (/) - Should return {"Hello": "World"}
-REM - Items endpoints with existing IDs (1-10)
-REM - Error handling (non-existent items)
-REM - Different query parameters
-REM
-REM IMPORTANT NOTES:
-REM - This uses simplified curl syntax that works in PowerShell
-REM - For more detailed testing, use the individual test_*.md files
-REM - If you see errors, check that the server is running
-REM
-REM EXPECTED BEHAVIOR:
-REM - Successful requests show JSON responses
-REM - Error requests show error messages (this is normal!)
-REM - Script runs all tests automatically and pauses at the end
-REM ================================================================
-
 @echo off
 REM ================================================================
 REM FastAPI Complete Endpoints Batch Testing Script
@@ -74,7 +36,6 @@ REM - Some requests will show errors (404, validation) - this is normal!
 REM - The script tests both success and error cases
 REM - For POST/PUT operations, see the individual test_*.md files
 REM ================================================================
-
 echo ================================================================
 echo FastAPI Complete Test Suite
 echo ================================================================
@@ -213,11 +174,44 @@ curl http://127.0.0.1:8000/models/invalid_model
 echo.
 
 echo ================================
+echo TESTING STRING/BYTES CONVERSION ENDPOINTS
+echo ================================
+echo.
+
+echo 29. External API - Get post 1 (async/await demo):
+curl http://127.0.0.1:8000/external/post/1
+echo.
+
+echo 30. External API - Test error case:
+curl http://127.0.0.1:8000/external/post/999999
+echo.
+
+echo 31. Filename encoding conversion:
+curl http://127.0.0.1:8000/convert/filename/archivo1.jpg
+echo.
+
+echo 32. Filename with special characters:
+curl "http://127.0.0.1:8000/convert/filename/file%20with%20spaces.txt"
+echo.
+
+echo 33. Image processing simulation:
+curl http://127.0.0.1:8000/convert/image-simulation
+echo.
+
+echo 34. Simple bytes conversion:
+curl http://127.0.0.1:8000/convert/image-simple
+echo.
+
+echo 35. Ultra-simple test endpoint:
+curl http://127.0.0.1:8000/convert/test
+echo.
+
+echo ================================
 echo TESTING DOCUMENTATION ENDPOINTS
 echo ================================
 echo.
 
-echo 29. OpenAPI JSON schema:
+echo 36. OpenAPI JSON schema:
 curl http://127.0.0.1:8000/openapi.json
 echo.
 
@@ -226,8 +220,10 @@ echo ALL TESTS COMPLETED!
 echo ================================================================
 echo.
 echo Summary:
-echo - Tested 29 different endpoints
+echo - Tested 36 different endpoints
 echo - Covered all routers: main, items, users, models
+echo - Tested string/bytes conversion endpoints
+echo - Tested external API integration (async/await)
 echo - Tested both success and error cases
 echo - Some errors (404, validation) are expected and normal
 echo.

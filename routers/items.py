@@ -124,15 +124,22 @@ async def get_item(item_id: int, include_details: bool = False, format_type: Opt
 
 _item_id_counter = max(item["item_id"] for item in fake_items) if fake_items else 0
 
-@router.post("/", response_model=ItemBase)
-async def create_item(item: ItemCreate): # The ItemCreate model appears in the documentation to fill out
-    """Create a new item"""
+@router.post("/")
+async def create_item(item: ItemCreate): 
+    """Create a new item and return it with its tax price"""
     global _item_id_counter
     _item_id_counter += 1
-    new_item = {
-        "item_id": _item_id_counter,
-        "name": item.name,
-        "price": item.price
-    }
-    fake_items.append(new_item)
-    return new_item
+    
+    # Convert Pydantic model to dictionary using model_dump(), otherwise you cannot modify its fields!
+    item_dict = item.model_dump()
+    
+    # Add the generated ID
+    item_dict["item_id"] = _item_id_counter
+    
+    # Calculate and add tax price (20% tax)
+    if item_dict["price"] is not None:
+        tax_price = item_dict["price"] * 1.2
+        item_dict["tax_price"] = tax_price
+    
+    fake_items.append(item_dict)
+    return item_dict

@@ -56,7 +56,7 @@ async def create_user(user: UserCreate):
     return new_user
 
 @router.put("/{user_id}", response_model=User)
-async def update_user(user_id: int, user: UserCreate):
+async def update_user(user_id: int, user: UserCreate):# The UserCreate model appears in the documentation to fill out
     for i, existing_user in enumerate(fake_users):
         if existing_user["id"] == user_id:
             fake_users[i].update({
