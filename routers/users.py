@@ -14,15 +14,17 @@ class User(BaseModel):
     name: str
     email: str
     active: bool = True
+    edad: int | None = None  # Optional age field
 
 class UserCreate(BaseModel):
     name: str
     email: str
+    edad: int | None = None  # Optional age field
 
 fake_users = [
-    {"id": 1, "name": "John Doe", "email": "john@example.com", "active": True},
+    {"id": 1, "name": "John Doe", "email": "john@example.com", "active": True, "edad": 30},
     {"id": 2, "name": "Jane Smith", "email": "jane@example.com", "active": True},
-    {"id": 3, "name": "Alice Johnson", "email": "alice@example.com", "active": True}
+    {"id": 3, "name": "Alice Johnson", "email": "alice@example.com", "active": True, "edad": 28}
 ]
 
 @router.get("/", response_model=List[User])
@@ -47,7 +49,8 @@ async def create_user(user: UserCreate):
         "id": _user_id_counter,
         "name": user.name,
         "email": user.email,
-        "active": True
+        "active": True,
+        "edad": user.edad  # Include age if provided
     }
     fake_users.append(new_user)
     return new_user
@@ -58,7 +61,8 @@ async def update_user(user_id: int, user: UserCreate):
         if existing_user["id"] == user_id:
             fake_users[i].update({
                 "name": user.name,
-                "email": user.email
+                "email": user.email,
+                "edad": user.edad  # Update age if provided
             })
             return fake_users[i]
     raise HTTPException(status_code=404, detail="User not found")

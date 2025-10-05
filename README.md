@@ -1,5 +1,7 @@
 # FastAPI Scaffolding Project
 
+FastAPI basic REST API with instructions to start a project and test it, but also with lots of examples to learn FastApi and Python for beginners
+
 ## Environment Information
 
 **Python Version:** 3.13.7
