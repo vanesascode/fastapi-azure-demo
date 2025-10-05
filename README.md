@@ -93,6 +93,7 @@ fastapi dev main.py
 - **Main application**: http://127.0.0.1:8000
 - **Interactive documentation (Swagger)**: http://127.0.0.1:8000/docs
 - **Alternative documentation (ReDoc)**: http://127.0.0.1:8000/redoc
+- **OpenAPI JSON schema**: http://127.0.0.1:8000/openapi.json
 
 ### What you'll see at each URL:
 
@@ -200,3 +201,81 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/items/42?q=test" -Method Get
 3. **Port already in use**:
    - Use a different port: `uvicorn main:app --port 8001 --reload`
    - Or kill the process using port 8000
+
+## FastAPI Special Features
+
+### Path Converter - Handling File Paths in URLs
+
+One interesting feature implemented in this project is the **Path Converter**, which allows handling file paths as URL parameters.
+
+#### The Problem
+
+Normal path parameters only capture a single segment:
+
+```python
+@app.get("/files/{filename}")  # ❌ Only captures "document.pdf"
+async def get_file(filename: str):
+    return {"file": filename}
+```
+
+**URL**: `/files/folder/subfolder/document.pdf`  
+**Result**: `filename = "folder"` ❌ (loses the rest)
+
+#### The Solution: `:path` Converter
+
+Using Starlette's path converter:
+
+```python
+@app.get("/images/{image_path:path}")  # ✅ Captures entire path
+async def serve_image(image_path: str):
+    return {"image_path": image_path}
+```
+
+**URL**: `/images/productos/laptops/gaming.jpg`  
+**Result**: `image_path = "productos/laptops/gaming.jpg"` ✅
+
+#### Real-World Use Cases
+
+```
+File Server Structure:
+/static/
+  ├── documentos/
+  │   ├── manual.pdf
+  │   └── guias/
+  │       └── instalacion.pdf
+  ├── imagenes/
+  │   ├── logo.png
+  │   └── fotos/
+  │       └── equipo.jpg
+  └── videos/
+      └── tutoriales/
+          └── api-usage.mp4
+```
+
+**Working URLs:**
+
+- `/images/documentos/manual.pdf` → Serves the PDF
+- `/images/imagenes/fotos/equipo.jpg` → Serves the image
+- `/images/videos/tutoriales/api-usage.mp4` → Serves the video
+
+#### Important Notes
+
+1. **Order matters**: Specific routes must come before path converters
+
+   ```python
+   @app.get("/images/config")        # ✅ Specific first
+   @app.get("/images/{path:path}")   # ✅ Generic last
+   ```
+
+2. **Leading slash**: For paths starting with `/`, use double slash in URL
+
+   ```
+   URL: /images//home/user/file.txt
+   Result: path = "/home/user/file.txt"
+   ```
+
+3. **Common applications**:
+   - File servers (like Google Drive)
+   - Documentation systems (like GitBook)
+   - Repository browsers (like GitHub)
+   - Media streaming services
