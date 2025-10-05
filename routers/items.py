@@ -1,12 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 from enum import Enum
 
 router = APIRouter(
-    prefix="/items", # Añade automáticamente /items al inicio de todas las rutas de este router: DRY (Don't Repeat Yourself)
-    tags=["items"], #Organiza la documentación en http://127.0.0.1:8000/docs
-    responses={404: {"description": "Not found"}}, # Respuesta posible que indicamos en el Swagger para rutas no encontradas
+    prefix="/items", # Automatically adds /items at the beginning of all routes in this router: DRY (Don't Repeat Yourself)
+    tags=["items"], # Organizes documentation at http://127.0.0.1:8000/docs
+    responses={404: {"description": "Not found"}}, # Possible response we indicate in Swagger for routes not found
 )
 
 class FormatType(str, Enum):
@@ -39,30 +39,30 @@ fake_items = [
 @router.get("/", response_model=List[ItemBase])
 async def get_items(skip: int = 0, limit: int = 10):
     """
-    Obtener items con paginación
+    Get items with pagination
     
-    - **skip**: Número de elementos a saltar (por defecto 0)
-    - **limit**: Número máximo de elementos a devolver (por defecto 10)
+    - **skip**: Number of elements to skip (default 0)
+    - **limit**: Maximum number of elements to return (default 10)
     
-    Ejemplos:
-    - /items/ → Primeros 10 items
-    - /items/?limit=3 → Primeros 3 items  
-    - /items/?skip=3&limit=2 → Items 4 y 5
+    Examples:
+    - /items/ → First 10 items
+    - /items/?limit=3 → First 3 items  
+    - /items/?skip=3&limit=2 → Items 4 and 5
     """
     return fake_items[skip : skip + limit]
 
 @router.get("/search", response_model=List[ItemBase])
 async def search_items(
-    q: str,  # Obligatorio para búsqueda
+    q: str,  # Required for search
     min_price: Optional[float] = None,
     max_price: Optional[float] = None
 ):
     """
-    Buscar items por criterios
+    Search items by criteria
     
-    - **q**: Término de búsqueda (busca en el nombre)
-    - **min_price**: Precio mínimo (opcional)
-    - **max_price**: Precio máximo (opcional)
+    - **q**: Search term (searches in the name)
+    - **min_price**: Minimum price (optional)
+    - **max_price**: Maximum price (optional)
     """
     results = []
     
@@ -81,53 +81,56 @@ async def search_items(
     return results
 
 @router.get("/{item_id}", response_model=dict)
-async def get_item(item_id: int, include_details: bool = False, format: Optional[FormatType] = None):  
+async def get_item(item_id: int, include_details: bool = False, format_type: Optional[FormatType] = None):  
     """
-    Obtener un item específico por ID
+    Get a specific item by ID
     
-    - **item_id**: ID único del item (obligatorio)
-    - **include_details**: Incluir detalles adicionales (opcional, por defecto False)
-    - **format**: Formato de respuesta (opcional: solo "simple" o "detailed")
+    - **item_id**: Unique item ID (required)
+    - **include_details**: Include additional details (optional, default False)
+    - **format_type**: Response format (optional: only "simple" or "detailed")
     
-    Ejemplos:
-    - /items/1 → Item básico
-    - /items/1?include_details=true → Item con más info
-    - /items/1?format=detailed → Item con formato específico
-    - /items/1?include_details=true&format=simple → Ambos parámetros
+    Examples:
+    - /items/1 → Basic item
+    - /items/1?include_details=true → Item with more info
+    - /items/1?format=detailed → Item with specific format
+    - /items/1?include_details=true&format=simple → Both parameters
     """
-    # Buscar el item
+    # Search for the item
     for item in fake_items:
         if item["item_id"] == item_id:
-            # Item básico
+            # Basic item
             result = {
                 "item_id": item["item_id"],
                 "name": item["name"],
                 "price": item["price"]
             }
             
-            # Añadir detalles si se solicita
+            # Add details if requested
             if include_details:
                 result["category"] = "electronics"
                 result["in_stock"] = True
                 result["rating"] = 4.5
             
-            # Aplicar formato si se especifica
-            if format == FormatType.simple:
+            # Apply format if specified
+            if format_type == FormatType.simple:
                 result["display"] = f"{item['name']} - ${item['price']}"
-            elif format == FormatType.detailed:
+            elif format_type == FormatType.detailed:
                 result["description"] = f"High-quality {item['name']} for ${item['price']}"
             
             return result
     
-    # Si no se encuentra el item
-    from fastapi import HTTPException
+    # If item is not found
     raise HTTPException(status_code=404, detail="Item not found")
 
+_item_id_counter = max(item["item_id"] for item in fake_items) if fake_items else 0
+
 @router.post("/", response_model=ItemBase)
-async def create_item(item: ItemCreate): # El modelo ItemCreate aparece en la documentación para rellenar
-    """Crear un nuevo item"""
+async def create_item(item: ItemCreate): # The ItemCreate model appears in the documentation to fill out
+    """Create a new item"""
+    global _item_id_counter
+    _item_id_counter += 1
     new_item = {
-        "item_id": len(fake_items) + 1,
+        "item_id": _item_id_counter,
         "name": item.name,
         "price": item.price
     }

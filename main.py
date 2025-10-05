@@ -27,27 +27,27 @@ def get_datetime():
         "timestamp": datetime.now(),
     }
 
-@app.get("/{name}", response_model=HelloResponse)
-def read_root_name(name: str):
-    return {"Hello": name}
-
 @app.get("/images/{image_path:path}")
 async def serve_image(image_path: str):
     """
-    Servir imágenes desde diferentes carpetas
+    Serve images from different folders
     
-    Ejemplos útiles:
-    - /images/productos/laptop.jpg
-    - /images/usuarios/avatares/juan.png
-    - /images/blog/2024/articulo-1/portada.jpg
+    Useful examples:
+    - /images/products/laptop.jpg
+    - /images/users/avatars/juan.png
+    - /images/blog/2024/article-1/cover.jpg
     """
-    # En la vida real, aquí verificarías que el archivo existe
-    # y devolverías FileResponse(f"/static/images/{image_path}")
+    # In real life, here you would verify that the file exists
+    # and return FileResponse(f"/static/images/{image_path}")
     
     return {
         "image_path": image_path,
-        "full_url": f"https://miservidor.com/static/images/{image_path}",
-        "tipo": "imagen",
-        "carpeta": image_path.split('/')[0] if '/' in image_path else "raiz"
+        "full_url": f"https://myserver.com/static/images/{image_path}",
+        "type": "image",
+        "folder": image_path.split('/')[0] if '/' in image_path else "root"
     }
 
+# This endpoint must go at the end to avoid conflicts with other endpoints
+@app.get("/{name}", response_model=HelloResponse)
+def read_root_name(name: str):
+    return {"Hello": name}
