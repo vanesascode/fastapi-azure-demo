@@ -1,7 +1,9 @@
+from decimal import Decimal
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 from enum import Enum
+from datetime import datetime
 
 router = APIRouter(
     prefix="/items", # Automatically adds /items at the beginning of all routes in this router: DRY (Don't Repeat Yourself)
@@ -16,14 +18,16 @@ class FormatType(str, Enum):
 class ItemBase(BaseModel):
     item_id: int
     name: str
-    price: float
+    price: Decimal
+    release_date: Optional[datetime] = None
 
 class ItemCreate(BaseModel):
     name: str
-    price: float
+    price: Decimal
+    release_date: Optional[datetime] = None
 
 fake_items = [
-    {"item_id": 1, "name": "Laptop", "price": 999.99},
+    {"item_id": 1, "name": "Laptop", "price": 999.99, "release_date": "2025-10-07T15:53:00+02:00"},
     {"item_id": 2, "name": "Mouse", "price": 29.99},
     {"item_id": 3, "name": "Keyboard", "price": 79.99},
     {"item_id": 4, "name": "Monitor", "price": 299.99},
@@ -54,8 +58,8 @@ async def get_items(skip: int = 0, limit: int = 10):
 @router.get("/search", response_model=List[ItemBase])
 async def search_items(
     q: str,  # Required for search
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None
+    min_price: Optional[Decimal] = None,
+    max_price: Optional[Decimal] = None
 ):
     """
     Search items by criteria

@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
-from typing import Annotated, List
+from typing import Annotated, List, FrozenSet
 from .items import fake_items
+from uuid import UUID, uuid4
 
 router = APIRouter(
     prefix="/users",    # All endpoints will start with /users
@@ -10,21 +11,44 @@ router = APIRouter(
 )
 
 class User(BaseModel):
-    id: int
+    id: UUID
     name: str
     email: str
     active: bool = True
+    roles: FrozenSet[str] = frozenset() # Set of roles (no duplicates, unordered) This means that even if you put: "roles": ["artist", "dancer", "dancer"], the user will only have the roles "artist" and "dancer"
     edad: int | None = None  # Optional age field
 
 class UserCreate(BaseModel):
     name: str
     email: str
     edad: int | None = None  # Optional age field
+    roles: FrozenSet[str] = frozenset()
 
 fake_users = [
-    {"id": 1, "name": "John Doe", "email": "john@example.com", "active": True, "edad": 30},
-    {"id": 2, "name": "Jane Smith", "email": "jane@example.com", "active": True},
-    {"id": 3, "name": "Alice Johnson", "email": "alice@example.com", "active": True, "edad": 28}
+    {
+        "id": "a1b2c3d4-e5f6-7890-1234-567890abcdef", 
+        "name": "John Doe", 
+        "email": "john@example.com", 
+        "active": True, 
+        "roles": ["admin", "writer"], # We add roles (as a list, Pydantic will convert it to FrozenSet)
+        "edad": 30
+    },
+    {
+        "id": "b5e8f4c1-d2a9-40b3-8c7e-9f0a1b2c3d4e", 
+        "name": "Jane Smith", 
+        "email": "jane@example.com", 
+        "active": True,
+        "roles": ["editor"], # Un solo rol
+        "edad": None
+    },
+    {
+        "id": "c7a8b9d0-e1f2-3456-7890-fedcba987654", 
+        "name": "Alice Johnson", 
+        "email": "alice@example.com", 
+        "active": True, 
+        "roles": [], # Sin roles (lista vacía)
+        "edad": 28
+    }
 ]
 
 @router.get("/", response_model=List[User])
@@ -38,18 +62,14 @@ async def get_user(user_id: int):
             return user
     raise HTTPException(status_code=404, detail="User not found")
 
-# Calculate the highest ID automatically (avoids magic numbers)
-_user_id_counter = max(user["id"] for user in fake_users) if fake_users else 0
-
 @router.post("/", response_model=User)
 async def create_user(user: UserCreate):
-    global _user_id_counter
-    _user_id_counter += 1
     new_user = {
-        "id": _user_id_counter,
+        "id": str(uuid4()), 
         "name": user.name,
         "email": user.email,
         "active": True,
+        "roles": list(user.roles),
         "edad": user.edad  # Include age if provided
     }
     fake_users.append(new_user)
@@ -62,6 +82,7 @@ async def update_user(user_id: int, user: UserCreate):# The UserCreate model app
             fake_users[i].update({
                 "name": user.name,
                 "email": user.email,
+                "roles": list(user.roles), 
                 "edad": user.edad  # Update age if provided
             })
             return fake_users[i]
