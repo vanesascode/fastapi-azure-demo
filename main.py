@@ -1,6 +1,6 @@
-from typing import Union
+from typing import Annotated, List
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 import httpx
 import base64
 from routers import users, items, models
@@ -227,7 +227,44 @@ async def simulate_image_processing():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
 
+# See the difference between having a list of queries vs many query parameters defined (between multiple_queries and various_queries):
+@app.get("/multiple-queries/")
+async def multiple_queries(q: Annotated[list[str] | None, Query()] = None):
+    """
+    Example of multiple query parameters with the same name
+    
+    - **q**: List of query strings (e.g. ?q=foo&q=bar)
+    
+    Example: /multiple-queries/?q=apple&q=banana&q=cherry
+    """
+    return {"queries": q}
+
+@app.get("/various-queries/")
+async def various_queries(
+    q: Annotated[str | None, Query(min_length=3, max_length=50)] = None,
+    page: int = 1,
+    size: int = 10,
+    sort: Annotated[str, Query(pattern="^(asc|desc)$")] = "asc"
+):
+    """
+    Example of various query parameters with validation
+    
+    - **q**: Optional search query (min 3 chars, max 50)
+    - **page**: Page number (default 1)
+    - **size**: Page size (default 10)
+    - **sort**: Sort order ("asc" or "desc", default "asc")
+    
+    Example: /various-queries/?q=fastapi&page=2&size=5&sort=desc
+    """
+    return {
+        "query": q,
+        "page": page,
+        "size": size,
+        "sort": sort
+    }
+
 # This endpoint must go at the end to avoid conflicts with other endpoints
 @app.get("/{name}", response_model=HelloResponse)
 def read_root_name(name: str):
     return {"Hello": name}
+

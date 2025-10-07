@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
-from typing import List
+from typing import Annotated, List
 from .items import fake_items
 
 router = APIRouter(
@@ -75,9 +75,10 @@ async def delete_user(user_id: int):
             return {"message": f"User {deleted_user['name']} deleted"}
     raise HTTPException(status_code=404, detail="User not found")
 
+#The title and description will appear in the redoc documentation
 @router.get("/{user_id}/items/{item_id}")
 async def read_user_item(
-    user_id: int, item_id: int, q: str | None = None, short: bool = False
+    user_id: int, item_id: int, q: Annotated[ str | None, Query(min_length=3, max_length=50, pattern="^[aeiouAEIOU]{3,50}$", title="Query of only vocals", description="A query parameter that only accepts vowels."), ] = None, short: bool = False
 ):
     """
     Get a specific item from a user
